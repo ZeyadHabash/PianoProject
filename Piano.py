@@ -40,11 +40,16 @@ def tone_generator(start_time, period, freq):
 
     return note
 
+#def song_generator():
+
+
 
 # main
 t = np.linspace(0, 3, 12 * 1024) # parameters are (start time, duration, samplerate * duration)
-x = tone_generator(0, 1.5, c4)  # x will contain the notes, this is a placeholder
+x = tone_generator(0, 3, c4)  # x will contain the notes, this is a placeholder
 
+sd.play(x, 3 * 1024)
 plt.plot(t, x)
 plt.show()
-#sd.play(x, 3 * 1024)
+sd.wait()
+
