@@ -29,9 +29,12 @@ b4 = 493.88
 def tone_generator(start_time, period, freq):
     u1 = u2 = np.zeros(np.shape(t))
 
-    u1[t > start_time] = 1
-    u2[t > start_time + period] = 1
-
+    u1[t >= start_time] = 1
+    u2[t >= start_time + period] = 1
+    plt.subplot(2,1,1)
+    plt.plot(t,u1)
+    plt.subplot(2,1,2)
+    plt.plot(t,u2)
     step = u1 - u2
     note = np.sin(2 * np.pi * t * freq) * step
 
@@ -39,10 +42,9 @@ def tone_generator(start_time, period, freq):
 
 
 # main
-t = np.linspace(0, 3, 12 * 1024)
+t = np.linspace(0, 3, 12 * 1024) # parameters are (start time, duration, samplerate * duration)
 x = tone_generator(0, 3, c4)  # x will contain the notes, this is a placeholder
-"""All code here"""
 
-plt.plot(t, x)
+#plt.plot(t, x)
 plt.show()
 #sd.play(x, 3 * 1024)
