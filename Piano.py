@@ -2,7 +2,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import sounddevice as sd
 
-
 # Piano Frequencies
 # 3rd Octave
 c3 = 130.81
@@ -23,33 +22,52 @@ a4 = 440
 b4 = 493.88
 
 
-# functions
+# Functions
 
-# calculates the step function which defines the playing interval and uses it to generate a single note
-def tone_generator(start_time, period, freq):
+# Calculates the step function, using the given amplitude, which defines the playing interval and uses it to generate
+# a note with the given frequencies
+def tone_generator(start_time, period, freq1, freq2, amp):
     u1 = np.zeros(np.shape(t))
     u2 = np.zeros(np.shape(t))
 
+    # Initialize u1 and u2 as unit step functions with given amplitude
+    u1[t >= start_time] = amp
+    u2[t >= start_time + period] = amp
 
-    u1[t >= start_time] = 1
-    u2[t >= start_time + period] = 1
-
-    
+    # Final step which determines the time of playing the tone calculated by subtracting 2 unit step functions
     step = u1 - u2
-    note = np.sin(2 * np.pi * t * freq) * step
+
+    # Tone calculated using [sin (2𝜋Ϝ𝑖𝑡) + sin (2𝜋𝑓𝑖𝑡) ] * step
+    # where step is [𝑢(𝑡 − 𝑡𝑖) − 𝑢(𝑡 − 𝑡𝑖 − 𝑇𝑖)]
+    note = (np.sin(2 * np.pi * t * freq1) + np.sin(2 * np.pi * t * freq2)) * step
 
     return note
 
-#def song_generator():
+
+# Generates a whole song by adding tones made using the tone_generator() function
+def song_generator(t_start, t_period, frequencies1, frequencies2, amps):  # Parameters are arrays of (start time,
+    # periods, left hand frequencies, right hand frequencies, amplitudes)
+    pt = 0
+
+    # For loop which adds all tones made by passing each element of the given arrays to the tone_generator() function
+    for i in range(len(amps)):
+        note = tone_generator(t_start[i], t_period[i], frequencies1[i], frequencies2[i], amps[i])
+        pt = pt + note
+    return pt
 
 
+# Main
+t = np.linspace(0, 3, 12 * 1024)  # Parameters are (start time, duration, samplerate * duration)
+amps = [1, 0.5, 0.5, 0.2, 1, 0.3, 0.9]
+t_start = [0, 0.35, 0.85, 1.15, 2, 2.35, 2.9]
+t_period = [0.25, 0.4, 0.25, 0.75, 0.25, 0.5, 0.1]
+frequencies_1 = [0, 0, 0, 0, 0, 0, 0]
+frequencies_2 = [c4, d4, e4, c4, e4, g4, a4]
 
-# main
-t = np.linspace(0, 3, 12 * 1024) # parameters are (start time, duration, samplerate * duration)
-x = tone_generator(0, 3, c4)  # x will contain the notes, this is a placeholder
 
-sd.play(x, 3 * 1024)
-plt.plot(t, x)
+song = song_generator(t_start, t_period, frequencies_1, frequencies_2, amps)
+
+sd.play(song, 3 * 1024)
+plt.plot(t, song)
 plt.show()
 sd.wait()
-
