@@ -1,6 +1,9 @@
+from math import ceil
+
 import numpy as np
 import matplotlib.pyplot as plt
 import sounddevice as sd
+from scipy.fftpack import fft
 
 # Piano Frequencies
 # 3rd Octave
@@ -57,6 +60,7 @@ def song_generator(t_start, t_period, frequencies1, frequencies2, amps):  # Para
 
 
 # Main
+f1, f2 = np.random.randint(0, 512, 2)
 t = np.linspace(0, 3, 12 * 1024)  # Parameters are (start time, duration, samplerate * duration)
 amps = [1, 0.5, 0.5, 0.2, 1, 0.3, 0.9]
 t_start = [0, 0.35, 0.85, 1.15, 2, 2.35, 2.9]
@@ -64,10 +68,46 @@ t_period = [0.25, 0.4, 0.25, 0.75, 0.25, 0.5, 0.1]
 frequencies_1 = [0, 0, 0, 0, 0, 0, 0]
 frequencies_2 = [c4, d4, e4, c4, e4, g4, a4]
 
-
 song = song_generator(t_start, t_period, frequencies_1, frequencies_2, amps)
 
-sd.play(song, 3 * 1024)
-plt.plot(t, song)
+N = 3 * 1024
+f = np.linspace(0, 512, int(N / 2))
+# song before noise
+song_f = fft(song)
+song_f = 2 / N * np.abs(song_f[0:int(N / 2)])
+
+n = tone_generator(0, 3, f1, f2, 1)
+# song with noise
+final_song = song + n
+final_song_f = fft(final_song)
+final_song_f = 2 / N * np.abs(final_song_f[0:int(N / 2)])
+
+maxOG = np.amax(song_f)
+
+freqList = []
+for frqIndex in range(len(final_song_f)):
+    if final_song_f[frqIndex] > ceil(maxOG):
+        freqList.append(frqIndex)
+
+fn1 = round(f[freqList[0]])
+fn2 = round(f[freqList[1]])
+
+filteringTone = tone_generator(0, 3, fn1, fn2, 1)
+
+# song after filtering
+song_filtered = final_song - filteringTone
+song_filtered_f = fft(song_filtered)
+song_filtered_f = 2 / N * np.abs(song_filtered_f[0:int(N / 2)])
+
+sd.play(song_filtered, 3 * 1024)
+plt.subplot(2, 2, 1)
+plt.plot(t, song_filtered)
+plt.subplot(2, 2, 2)
+plt.plot(f, song_filtered_f)
+plt.subplot(2, 2, 3)
+plt.plot(t, final_song)
+plt.subplot(2, 2, 4)
+plt.plot(f, final_song_f)
+
 plt.show()
 sd.wait()
